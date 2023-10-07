@@ -311,7 +311,7 @@ for fib in fibonacci_generator(21):
     \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{La palabra mágica yield}
+\begin{frame}[fragile]{La palabra mágica \texttt{yield}}
 \begin{block}{Generador}
 \begin{minted}[fontsize=\scriptsize]{python}
 def fibonacci_generator(max_value):
@@ -345,6 +345,43 @@ print(list(squares_gen))
 [1, 4, 9, 16, 25]   
 \end{minted}
 \end{block} 
+\end{frame}
+
+\begin{frame}{¡Los generadores pueden hacer aún más cosas!}
+    \begin{enumerate}
+        \item Se les pueden mandar valores al generador por medio del método \texttt{send}.
+        \item Si le añadimos un \texttt{return} podemos devolver valores al terminar la ejecución del generador.
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]{Generador completo}
+\begin{block}{Implementación}
+\begin{minted}[fontsize=\tiny]{python}
+def hello_n_times(n):
+    for i in range(n):
+        received = yield "Hello"
+        if received: 
+            print(f"Received: {received}")
+    return f"I have printed {n} times hello"
+
+gen = hello_n_times(3)
+print(next(gen))
+print(gen.send("World")) 
+print(next(gen))  
+
+try:
+    next(gen)
+except StopIteration as e:
+    print(e.value)
+\end{minted}
+\begin{minted}[fontsize=\tiny]{text}
+Hello
+Received: World
+Hello
+Hello
+I have printed 3 times hello 
+\end{minted}
+\end{block}
 \end{frame}
 
 \section{Conclusiones}
