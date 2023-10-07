@@ -1,0 +1,373 @@
+\documentclass[11pt]{beamer}
+\usetheme{Madrid}
+\usepackage[spanish]{babel}
+\usepackage{minted}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{svg}
+\usepackage{url}
+
+\setbeamertemplate{navigation symbols}{}
+\usecolortheme[named=orange]{structure}
+
+\title{Generadores e iteradores en Python}
+\author[Alejandro Fernández]{Alejandro Fernández Camello}
+\institute{Python Coruña}
+\logo{\includegraphics[height=0.8cm]{logo.jpg}}
+\date{18 de noviembre de 2023} 
+
+\AtBeginSection[]
+{
+  \begin{frame}
+    \frametitle{Índice}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}[fragile]
+
+\begin{center} \Large
+    ¿En qué se diferencian el código 1 y 2? 
+\end{center} \normalsize
+
+\begin{columns}[T]
+
+\begin{column}{.45\textwidth}
+\begin{block}{Código 1}
+\begin{minted}[fontsize=\scriptsize]{python}
+for i in list(range(1_000_000_000)):
+    print(i)
+\end{minted}
+\end{block} 
+\end{column}
+
+\begin{column}{.45\textwidth}
+\begin{block}{Código 2}
+\begin{minted}[fontsize=\scriptsize]{python}
+for i in range(1_000_000_000):
+    print(i)
+\end{minted}
+\end{block}
+\end{column}
+  
+\end{columns} 
+\end{frame}
+
+\begin{frame}{Índice}
+\tableofcontents 
+\end{frame}
+
+\section{¿Por qué son útiles los iteradores y generadores?}
+\begin{frame}{Ventajas de usar iteradores y generadores}
+    \begin{itemize}
+        \item <1-> Permiten la evaluación perezosa de datos (\textit{lazy evaluation}), generándolos solo cuando se requieren.
+        \item <2-> Reducen la cantidad de memoria necesaria al almacenar menos datos.
+        \item <3-> Facilitan el procesamiento de datos sin necesidad de generarlos todos de antemano.
+        \item <4-> Simplifican el código y minimizan el riesgo de cometer errores.
+    \end{itemize}
+\end{frame}
+
+\section{Iteradores}
+\begin{frame}[fragile]{Definición}
+\begin{block}{Implementación}
+\begin{minted}[fontsize=\scriptsize]{python}
+from collections.abc import Iterator
+
+class MyIterator(Iterator):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        pass
+\end{minted}
+\end{block}   
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplos}
+\begin{block}{Iterador sobre los cuadrados de los números naturales}
+\begin{minted}[fontsize=\scriptsize]{python}
+class SquareIterator(Iterator):
+    def __init__(self):
+        self.current = 1
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self.current += 1
+        return self.current ** 2
+
+infinite_squares = SquareIterator()
+
+for i, square in enumerate(infinite_squares, 1):
+    print(f"{i} -> {square}")
+\end{minted}
+\end{block}   
+\end{frame}
+
+\begin{frame}[fragile]{\textit{Built-in} iteradores}
+¿Qué iteradores trae ya definidos Python?
+\begin{itemize}
+    \item \texttt{range}
+    \item \texttt{enumerate}
+    \item \texttt{map}
+    \item \texttt{filter}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{\texttt{range}}
+\begin{block}{Funcionamiento interno de \texttt{range}}
+\begin{minted}[fontsize=\scriptsize]{python}
+class RangeIterator:
+    def __init__(self, start, stop, step=1):
+        self.start, self.stop, self.step  = start, stop, step
+        self.current = start - step
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self.current += self.step
+        if self.current >= self.stop:
+            raise StopIteration
+        return self.current
+
+for i in range(0, 5, 2):
+    print(i)
+\end{minted}
+\end{block}  
+\end{frame}
+
+\begin{frame}[fragile]{\texttt{enumerate}}
+\begin{block}{Funcionamiento de \texttt{enumerate}}
+\begin{minted}[fontsize=\scriptsize]{python}
+class EnumerateIterator:
+    def __init__(self, iterable):
+        self.iterable = iter(iterable)
+        self.index = -1
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self.index += 1
+        value = next(self.iterable)
+        return self.index, value
+
+for index, value in EnumerateIterator("abc"):
+    print(index, value)
+\end{minted}
+\end{block}  
+\end{frame}
+
+\begin{frame}[fragile]{\texttt{map}}
+\begin{block}{Funcionamiento de \texttt{map}}
+\begin{minted}[fontsize=\scriptsize]{python}
+class MapIterator:
+    def __init__(self, function, iterable):
+        self.function = function
+        self.iterable = iter(iterable)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        value = next(self.iterable)
+        return self.function(value)
+
+for value in MapIterator(lambda x: x * 2, [1, 2, 3]):
+    print(value)
+\end{minted}
+\end{block}  
+\end{frame}
+
+\begin{frame}[fragile]{\texttt{filter}}
+\begin{block}{Funcionamiento de \texttt{filter}}
+\begin{minted}[fontsize=\scriptsize]{python}
+class FilterIterator:
+    def __init__(self, function, iterable):
+        self.function = function
+        self.iterable = iter(iterable)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        while True:
+            value = next(self.iterable)
+            if self.function(value):
+                return value
+
+for value in FilterIterator(lambda x: x % 2 == 0, [1, 2, 3, 4]):
+    print(value)
+\end{minted}
+\end{block}  
+\end{frame}
+
+\begin{frame}{Reflexión}
+    \begin{center}
+        ¿No estamos teniendo que escribir demasiado código?
+    \end{center}
+    \begin{center}
+        ¿Por qué?
+    \end{center}
+\end{frame}
+
+\begin{frame}{La gestión del estado}
+    \begin{center}
+        ¿No hay alguna manera de delegar la gestión del estado al propio programa?
+    \end{center}
+    \begin{center}
+        Sí la hay, ¡los generadores!
+    \end{center}
+\end{frame}
+
+\section{Generadores}
+
+\begin{frame}[fragile]{Generadores al rescate}
+\begin{columns}[T]
+
+\begin{column}{.45\textwidth}
+\begin{block}{Iterador}
+\begin{minted}[fontsize=\scriptsize]{python}
+class FibonacciIterator:
+    def __init__(self, max_value):
+        self.max_value = max_value
+        self.a, self.b = 0, 1
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self.a, self.b = self.b, \
+        self.a + self.b
+        if self.a > self.max_value:
+            raise StopIteration
+        return self.a
+\end{minted}
+\end{block} 
+\end{column}
+
+\begin{column}{.45\textwidth}
+\begin{block}{Generador}
+\begin{minted}[fontsize=\scriptsize]{python}
+def fibonacci_generator(max_value):
+    a, b = 0, 1
+    while a <= max_value:
+        yield a
+        a, b = b, a + b
+\end{minted}
+\end{block}
+\end{column}
+
+\end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{Usando generadores}
+\begin{columns}[T]
+
+\begin{column}{.45\textwidth}
+\begin{block}{Iterador}
+\begin{minted}[fontsize=\scriptsize]{python}
+for fib in FibonacciIterator(21):
+    print(i)
+\end{minted}
+\end{block} 
+\end{column}
+
+\begin{column}{.45\textwidth}
+\begin{block}{Generador}
+\begin{minted}[fontsize=\scriptsize]{python}
+for fib in fibonacci_generator(21):
+    print(i)
+\end{minted}
+\end{block}
+\end{column}
+  
+\end{columns} 
+
+\begin{center}
+    ¡Se usan exactamente igual que los iteradores!
+\end{center}
+\end{frame}
+
+\begin{frame}{La palabra mágica \texttt{yield}}
+    \begin{itemize}
+        \item Utilizar \texttt{yield} en lugar de \texttt{return} transforma automáticamente el código en un generador en lugar de una función.
+        \item Al alcanzar \texttt{return} o \texttt{yield}, tanto funciones como generadores devuelven el control al punto del programa que los invocó.
+        \item Si se invoca una función de nuevo, esta se reinicia desde el principio.
+        \item En contraste, un generador reanuda la ejecución justo después del último \texttt{yield}.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{La palabra mágica yield}
+\begin{block}{Generador}
+\begin{minted}[fontsize=\scriptsize]{python}
+def fibonacci_generator(max_value):
+    a, b = 0, 1
+    while a <= max_value:
+        yield a
+        a, b = b, a + b
+\end{minted}
+\end{block} 
+\end{frame}
+
+\begin{frame}[fragile]{Convertir listas a generadores}
+
+\begin{center}
+   Cuando usamos comprensión de listas hay una forma muy sencilla de convertirla en un generador. ¡Simplemente cambia los corchetes por paréntesis! 
+\end{center}
+
+\begin{block}{Listas a generadores}
+\begin{minted}[fontsize=\scriptsize]{python}
+squares_list = [x*x for x in range(1, 6)]
+print(squares_list)
+
+squares_gen = (x*x for x in range(1, 6))
+print(squares_gen)
+print(list(squares_gen))
+\end{minted}
+
+\begin{minted}[fontsize=\scriptsize]{text}
+[1, 4, 9, 16, 25]
+<generator object <genexpr> at 0x7fbcf1b8cc50>
+[1, 4, 9, 16, 25]   
+\end{minted}
+\end{block} 
+\end{frame}
+
+\section{Conclusiones}
+
+\begin{frame}{Conclusiones}
+    \begin{itemize}
+        \item Los iteradores y generadores contribuyen a una mayor eficiencia al reducir el uso de memoria.
+        \item Permiten el cálculo de valores de manera secuencial en lugar de generarlos todos a la vez.
+        \item Los generadores logran una funcionalidad similar a la de los iteradores, pero con código más conciso y menor complejidad.
+        \item Los iteradores \textit{built-in} como \texttt{range}, \texttt{enumerate}, \texttt{map}, y \texttt{filter} son extremadamente útiles para simplificar el código.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Despedida}
+    \begin{center}
+        ¡Muchas gracias por haberme escuchado! 
+    \end{center}
+    \begin{center}
+        Tenéis disponible la presentación y el código en el siguiente enlace: \url{https://github.com/alexfdez1010/talk_generators_iterators}
+    \end{center}
+    \begin{center}
+        \includegraphics[width=0.33\textwidth]{qr.png}
+    \end{center}
+\end{frame}
+
+\end{document}
