@@ -70,10 +70,10 @@ for i in range(1_000_000_000):
 \section{¿Por qué son útiles los iteradores y generadores?}
 \begin{frame}{Ventajas de usar iteradores y generadores}
     \begin{itemize}
-        \item <1-> Permiten la evaluación perezosa de datos (\textit{lazy evaluation}), generándolos solo cuando se requieren.
-        \item <2-> Reducen la cantidad de memoria necesaria al almacenar menos datos.
-        \item <3-> Facilitan el procesamiento de datos sin necesidad de generarlos todos de antemano.
-        \item <4-> Simplifican el código y minimizan el riesgo de cometer errores.
+        \item Permiten la evaluación perezosa de datos (\textit{lazy evaluation}), generándolos solo cuando se requieren.
+        \item Reducen la cantidad de memoria necesaria al almacenar menos datos.
+        \item Facilitan el procesamiento de datos sin necesidad de generarlos todos de antemano.
+        \item Simplifican el código y minimizan el riesgo de cometer errores.
     \end{itemize}
 \end{frame}
 
@@ -101,7 +101,7 @@ class MyIterator(Iterator):
 \begin{minted}[fontsize=\scriptsize]{python}
 class SquareIterator(Iterator):
     def __init__(self):
-        self.current = 1
+        self.current = 0
 
     def __iter__(self):
         return self
