@@ -145,7 +145,7 @@ class RangeIterator:
             raise StopIteration
         return self.current
 
-for i in range(0, 5, 2):
+for i in RangeIterator(0, 5, 2):
     print(i)
 \end{minted}
 \end{block}  
